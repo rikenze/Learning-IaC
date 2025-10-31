@@ -1,0 +1,32 @@
+# na raiz do repo
+ni .gitignore -Value @"
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+*.tfvars.json
+.terraform.tfstate.lock.info
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+# IDE/OS comuns
+.vscode/
+.idea/
+.DS_Store
+"@
+
+# Remove do índice (sem apagar seus arquivos locais)
+git rm -r --cached .terraform
+git rm -r --cached *.tfstate *.tfstate.* crash.log *.tfvars *.tfvars.json .terraform.tfstate.lock.info 2>$null
+
+# Ajuste o commit atual (substitui o commit anterior com estes conteúdos limpos)
+git add .
+git commit --amend -m "Initial commit: infra sem .terraform e tfstate"
+git push -u origin main
+
+
+*.ssh
