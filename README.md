@@ -22,7 +22,7 @@ sudo add-apt-repository --yes --update ppa:ansible/ansible
 sudo apt-get install ansible
 ```
 
-### Gere uma chave RSA 4096
+### Gere uma chave RSA 4096 (Linux ou Windows)
 ```bash
 - Linux / WSL / macOS
     ssh-keygen -t rsa -b 4096 -C "seu-email" -f ~/.ssh/id_rsa_azure
