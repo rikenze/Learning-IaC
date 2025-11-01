@@ -7,3 +7,9 @@
       - virtualenv
       update_cache: yes
     become: yes
+  - name: instalando Django e Django rest na venv.
+    pip:
+      virtualenv: ~/tcc/venv
+      name: 
+        - django
+        - djangorestframework
