@@ -3,7 +3,7 @@
 # Requerimentos
 
 - Para instalar o Python no Ubuntu
-    sudo apt install python3
+    - sudo apt install python3
 
 - Para instalar o Terraform no Ubuntu
     wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
