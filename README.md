@@ -57,6 +57,7 @@ sudo apt-get install ansible
 terraform init
 terraform plan
 terraform apply
+terraform destroy
 ```
 
 ### Conectar na vm da azure
