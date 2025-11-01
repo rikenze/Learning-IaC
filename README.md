@@ -64,7 +64,7 @@ terraform apply
 ssh -i ~/.ssh/id_rsa_azure azureuser@<PUBLIC_IP>
 ```
 
-### Executar configuração com Ansible
+### Executar configuração com Ansible (Local, fora da VM)
 ```bash
 ansible-playbook playbook.yml -u azureuser --private-key ~/.ssh/id_rsa_azure -i hosts.yml
 ```
