@@ -25,9 +25,15 @@
         ##  - C:\Users\riken\.ssh\id_rsa_azure.pub    (pública)
 
         ## copia da pasta do windows para o mnt do linux(precisa estar no linux)
-        mkdir -p ~/.ssh
-        cp /mnt/c/Users/riken/.ssh/id_rsa_azure ~/.ssh/
-        chmod 600 ~/.ssh/id_rsa_azure
+        - privada
+            mkdir -p ~/.ssh
+            cp /mnt/c/Users/riken/.ssh/id_rsa_azure ~/.ssh/
+            chmod 600 ~/.ssh/id_rsa_azure
+            
+        - publica
+            mkdir -p ~/.ssh
+            cp /mnt/c/Users/riken/.ssh/id_rsa_azure.pub ~/.ssh/
+            chmod 600 ~/.ssh/id_rsa_azure.pub
 
     - Linux / WSL / macOS
         ssh-keygen -t rsa -b 4096 -C "seu-email" -f ~/.ssh/id_rsa_azure
