@@ -57,6 +57,8 @@ sudo apt-get install ansible
 terraform init
 terraform plan
 terraform apply
+
+# Para destruir toda infra criada:
 terraform destroy
 ```
 
