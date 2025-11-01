@@ -21,7 +21,7 @@ ls
 
 . venv/bin/activate
 
-pip freeze # para ver os pacotes instalados.
+python manage.py runserver 0.0.0.0:8000
 
 exit
 ```
