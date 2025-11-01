@@ -52,12 +52,19 @@ sudo apt-get install ansible
         chmod 644 ~/.ssh/id_rsa_azure.pub  # <- leitura liberada (normal para chave pública)
 ```    
 
+### Provisionar infraestrutura com Terraform
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
 ### Conectar na vm da azure
 ```bash
 ssh -i ~/.ssh/id_rsa_azure azureuser@<PUBLIC_IP>
 ```
 
-### Executar o playbook do ansible
+### Executar configuração com Ansible
 ```bash
 ansible-playbook playbook.yml -u azureuser --private-key ~/.ssh/id_rsa_azure -i hosts.yml
 ```
