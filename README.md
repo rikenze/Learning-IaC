@@ -25,23 +25,28 @@
         ##  - C:\Users\riken\.ssh\id_rsa_azure.pub    (pública)
 
         ## copia da pasta do windows para o mnt do linux(precisa estar no linux)
-        - privada
-            mkdir -p ~/.ssh
-            cp /mnt/c/Users/riken/.ssh/id_rsa_azure ~/.ssh/
-            chmod 600 ~/.ssh/id_rsa_azure
-            
-        - publica
-            mkdir -p ~/.ssh
-            cp /mnt/c/Users/riken/.ssh/id_rsa_azure.pub ~/.ssh/
-            chmod 600 ~/.ssh/id_rsa_azure.pub
+        # 1️ Garantir pasta segura
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+
+        # 2️ Copiar a chave privada do Windows
+        cp /mnt/c/Users/riken/.ssh/id_rsa_azure ~/.ssh/
+        chmod 600 ~/.ssh/id_rsa_azure   # <- somente o dono pode ler
+
+        # 3️ Copiar a chave pública (ou gerar, se não existir)
+        if [ -f /mnt/c/Users/riken/.ssh/id_rsa_azure.pub ]; then
+        cp /mnt/c/Users/riken/.ssh/id_rsa_azure.pub ~/.ssh/
+        else
+        ssh-keygen -y -f ~/.ssh/id_rsa_azure > ~/.ssh/id_rsa_azure.pub
+        fi
+        chmod 644 ~/.ssh/id_rsa_azure.pub  # <- leitura liberada (normal para chave pública)
 
     - Linux / WSL / macOS
         ssh-keygen -t rsa -b 4096 -C "seu-email" -f ~/.ssh/id_rsa_azure
         ## cria ~/.ssh/id_rsa_azure (privada) e ~/.ssh/id_rsa_azure.pub (pública)
 
 # conectar na vm da azure
-ssh -i /mnt/c/users/riken/.ssh/id_rsa_azure azureuser@172.171.110.2
+ssh -i ~/.ssh/id_rsa_azure azureuser@<PUBLIC_IP>
 
 # executar o playbook do ansible
-ansible-playbook playbook.yml -u azureuser --private-key ~/.ssh/id_rsa_azure -i hosts.
-yml
+ansible-playbook playbook.yml -u azureuser --private-key ~/.ssh/id_rsa_azure -i hosts.yml
