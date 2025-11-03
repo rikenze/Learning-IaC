@@ -32,11 +32,12 @@ O playbook realiza (resumo):
 * Inventário com o grupo `terraform-ansible` apontando para as VMs alvo.
 * Chave SSH configurada e com permissões corretas.
 
-Exemplo de inventário (INI):
+Exemplo de inventário (YML):
 
-```ini
-[terraform-ansible]
-SEU_IP_PUBLICO ansible_user=azureuser ansible_ssh_private_key_file=~/.ssh/id_rsa_azure
+```yml
+terraform-ansible:
+  hosts:
+    4.155.171.254:
 ```
 
 ---
