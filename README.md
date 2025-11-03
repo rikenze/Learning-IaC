@@ -105,7 +105,7 @@ O playbook usa variáveis para facilitar reutilização e manutenção. Exemplos
 ## Como rodar o playbook
 
 ```bash
-ansible-playbook playbook.yml -u azureuser --private-key ~/.ssh/id_rsa_azure -i hosts.yml
+ansible-playbook playbook-dotnet.yml -u azureuser --private-key ~/.ssh/id_rsa_azure -i hosts.yml
 ```
 
 Onde `hosts.yml` contém o host do grupo `terraform-ansible` e `playbook-dotnet.yml` é o playbook.
