@@ -1,24 +1,145 @@
+---
 - hosts: terraform-ansible
-  tasks: 
-  - name: instalando nginx e virtualenv
-    apt: 
-      pkg: 
-      - nginx
-      - virtualenv
-      update_cache: yes
-    become: yes
-  - name: instalando Django e Django rest na venv.
-    pip:
-      virtualenv: ~/tcc/venv
-      name: 
-        - django
-        - djangorestframework
-  - name: criando o projeto django
-    shell: '. /home/azureuser/tcc/venv/bin/activate; django-admin startproject setup /home/azureuser/tcc'
-  - name: ajustando o arquivo settings.py para allow hosts *
-    lineinfile:
-      path: /home/azureuser/tcc/setup/settings.py
-      regexp: 'ALLOWED_HOSTS'
-      line: 'ALLOWED_HOSTS = ["*"]'
-      backrefs: yes
-  
+  become: yes
+  vars:
+    dotnet_sdk_pkg: dotnet-sdk-8.0
+    app_name: ForecastApi
+    app_dir: /var/www/forecastapi
+    app_port: 5000
+    run_user: dotnet
+
+  pre_tasks:
+    - name: Instalar deps base
+      apt:
+        name:
+          - wget
+          - apt-transport-https
+          - gnupg
+          - ca-certificates
+        update_cache: yes
+        state: present
+
+    - name: Adicionar repositório Microsoft (packages-microsoft-prod)
+      shell: |
+        wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
+        dpkg -i /tmp/packages-microsoft-prod.deb
+      args:
+        creates: /etc/apt/sources.list.d/microsoft-prod.list
+
+    - name: Atualizar cache apt
+      apt:
+        update_cache: yes
+
+    - name: Instalar .NET SDK (para compilar publicar)
+      apt:
+        name: "{{ dotnet_sdk_pkg }}"
+        state: present
+
+  tasks:
+    - name: Criar usuário de runtime (sem login)
+      user:
+        name: "{{ run_user }}"
+        system: yes
+        shell: /usr/sbin/nologin
+        create_home: no
+
+    - name: Garantir diretórios do app
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ app_dir }}"
+        - "/opt/{{ app_name }}"
+        - "/opt/{{ app_name }}/src"
+
+    - name: Criar projeto WebAPI (se ainda não existe)
+      command: dotnet new webapi -n {{ app_name }} --no-https
+      args:
+        chdir: "/opt/{{ app_name }}/src"
+        creates: "/opt/{{ app_name }}/src/{{ app_name }}/Program.cs"
+
+    - name: (Opcional) Permitir CORS e swagger em produção simples
+      lineinfile:
+        path: "/opt/{{ app_name }}/src/{{ app_name }}/Program.cs"
+        insertafter: '^var app = builder.Build\(\);\s*$'
+        line: |
+          app.UseSwagger();
+          app.UseSwaggerUI();
+      when: "'Program.cs' is search('/opt/{{ app_name }}/src/{{ app_name }}/Program.cs')"
+
+    - name: Publicar em Release para {{ app_dir }}
+      command: dotnet publish -c Release -o {{ app_dir }}
+      args:
+        chdir: "/opt/{{ app_name }}/src/{{ app_name }}"
+      register: publish_out
+
+    - name: Ajustar permissões do diretório publicado
+      file:
+        path: "{{ app_dir }}"
+        owner: "{{ run_user }}"
+        group: "{{ run_user }}"
+        recurse: yes
+
+    - name: Criar serviço systemd
+      copy:
+        dest: /etc/systemd/system/{{ app_name | lower }}.service
+        content: |
+          [Unit]
+          Description={{ app_name }} (.NET)
+          After=network.target
+
+          [Service]
+          WorkingDirectory={{ app_dir }}
+          ExecStart={{ app_dir }}/{{ app_name }}
+          # Use esta linha se o publish gerar DLL:
+          # ExecStart=/usr/bin/dotnet {{ app_dir }}/{{ app_name }}.dll
+          Restart=always
+          RestartSec=5
+          User={{ run_user }}
+          Environment=ASPNETCORE_ENVIRONMENT=Production
+          Environment=ASPNETCORE_URLS=http://0.0.0.0:{{ app_port }}
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: Restart api
+
+    - name: Abrir porta no UFW (se habilitado)
+      command: ufw allow {{ app_port }}
+      register: ufw_out
+      failed_when: false
+      changed_when: "'added' in ufw_out.stdout or 'updated' in ufw_out.stdout"
+
+    - name: Ativar serviço na inicialização
+      systemd:
+        name: "{{ app_name | lower }}.service"
+        enabled: yes
+
+    - name: Iniciar serviço
+      systemd:
+        name: "{{ app_name | lower }}.service"
+        state: started
+
+    - name: Aguardar API subir
+      wait_for:
+        host: 127.0.0.1
+        port: "{{ app_port }}"
+        timeout: 30
+
+    - name: Testar endpoint /weatherforecast
+      uri:
+        url: "http://127.0.0.1:{{ app_port }}/weatherforecast"
+        method: GET
+        status_code: 200
+      register: api_check
+
+    - name: Exibir resposta de teste
+      debug:
+        var: api_check.json
+
+  handlers:
+    - name: Restart api
+      systemd:
+        name: "{{ app_name | lower }}.service"
+        state: restarted
+        daemon_reload: yes
